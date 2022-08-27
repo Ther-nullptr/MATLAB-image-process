@@ -1,0 +1,1382 @@
+\documentclass[a4paper]{article}
+\usepackage[UTF8]{ctex}
+\usepackage[left=3.17cm, right=3.17cm, top=2.54cm, bottom=2.54cm]{geometry}
+\usepackage[dvipsnames]{xcolor}
+\usepackage[most]{tcolorbox}
+\usepackage{fancyhdr}
+\usepackage{graphicx, subfigure}
+\usepackage{minted}
+\usepackage{amsmath}
+\usepackage[shortlabels]{enumitem}
+\setmonofont[]{Fira Code}
+\setenumerate{itemsep=0pt,partopsep=0pt,parsep=\parskip,topsep=0pt, itemindent=4em, leftmargin=0pt, listparindent=2em, label=(\arabic*)}
+\setitemize{itemsep=0pt,partopsep=0pt,parsep=\parskip,topsep=5pt}
+\setdescription{itemsep=0pt,partopsep=0pt,parsep=\parskip,topsep=5pt}
+
+\usepackage[sort&compress]{gbt7714}
+\usepackage{hyperref}
+\hypersetup{unicode, colorlinks=true, linkcolor=black, urlcolor=black}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{color}
+\usepackage{listings}
+\usepackage{fontspec}
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.95}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{blue},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+
+\lstset{style=mystyle}
+
+\begin{document}
+
+% \definecolor{bg}{rgb}{0.98,0.98,0.98}
+
+\title{\textbf{MATLAB大作业之图像处理}}
+
+\author{无03\quad 王与进 \quad2020010708}
+\date{}
+
+\maketitle
+
+\tableofcontents
+
+\newpage
+
+\section{文件列表}
+\begin{lstlisting}[language=matlab, caption=文件列表]
+.
+└── code
+    ├── data % 测试用数据
+    │   ├── Faces/
+    │   ├── hall.mat
+    │   ├── JpegCoeff.mat
+    │   ├── snow.mat
+    │   ├── test_1.bmp
+    │   ├── test_2.bmp
+    │   ├── test_3.bmp
+    │   ├── test_4.bmp
+    │   └── test_5.bmp
+    ├── ac_decode.m % ac解码 % --- 以下为函数 ---
+    ├── ac_encode.m % ac编码
+    ├── ac_huffman_tree_dict.m % 获取ac编码的huffman tree字典
+    ├── binary_decode.m % 解码二进制编码
+    ├── binary_encode.m % 编码二进制编码
+    ├── calculate_compress_ratio.m % 计算压缩比
+    ├── calculate_correct_ratio.m % 计算解码信息正确率
+    ├── concact_rgb.m % 拼接rgb值
+    ├── dc_decode.m % dc解码
+    ├── dc_encode.m % dc编码
+    ├── dc_huffman_tree_dict.m % 获取dc编码的huffman tree字典
+    ├── extract_face_feature.m % 提取训练集特征
+    ├── get_dct_matrix.m % 获取dct值
+    ├── get_dct_matrix_with_params.m
+    ├── get_dct_params.m
+    ├── get_face_area.m % 识别脸部方框
+    ├── get_probability_density.m % 获取图片颜色概率密度
+    ├── huffman_encode.m % huffman编码
+    ├── inv_zig_zag.m % 反zigzag
+    ├── jpeg_decode.m % jpeg解码
+    ├── jpeg_decode_with_info.m % jpeg解码（带有隐藏信息）
+    ├── jpeg_decode_with_params.m
+    ├── jpeg_encode.m % jpeg编码
+    ├── jpeg_encode_with_info.m % jpeg编码（带有隐藏信息）
+    ├── jpeg_encode_with_params.m
+    ├── my_dct.m % dct算法实现
+    ├── psnr.m % 计算PSNR
+    ├── run_size_encode.m % run/size编码
+    ├── test_ac_encode.m % ac编码测试
+    ├── zig_zag.m % zig-zag扫描
+    ├── hw_1_1.m % --- 以下为作业脚本 ---
+    ├── hw_1_2.m
+    ├── hw_2_1.m
+    ├── hw_2_2.m
+    ├── hw_2_3.m
+    ├── hw_2_4.m
+    ├── hw_2_5.m
+    ├── hw_2_7.m
+    ├── hw_2_8.m
+    ├── hw_2_9.m
+    ├── hw_2_11.m
+    ├── hw_2_12.m
+    ├── hw_2_13.m
+    ├── hw_3_1.m
+    ├── hw_3_2.m
+    ├── hw_4_1.m
+    ├── hw_4_2_extra.m
+    ├── hw_4_2.m % 4-2分为2个文件
+    ├── hw_4_3_1.m
+    ├── hw_4_3_2.m
+    └── hw_4_3_3.m % 4-3分为3个文件
+    
+\end{lstlisting}
+
+\section{练习题}
+
+\subsection{基础知识}
+\subsubsection{图像处理工具箱}
+\par 在MATLAB终端中输入help images：
+
+\begin{figure}[ht]
+     \centering
+     \includegraphics[width=.8\textwidth]{images.jpg}
+     \caption{help images}
+    \label{fig:help images}
+\end{figure}
+
+\subsubsection{简单的图像处理}
+\begin{description}
+    \item[绘制红色圆形] 
+    \par 在本例中，我使用了matlab自带的rectangle函数。其中width/2-r和height/2-r表示圆外切正方形的左下端的坐标，2*r表示圆的直径。
+    \begin{lstlisting}[language=matlab, caption=绘制红色圆形]
+    load('data/hall.mat')
+    hall_with_circle = hall_color;
+    imshow(hall_with_circle);
+
+    % get size
+    [height, width, ~] = size(hall_color);
+    r = min(height, width)/2;
+    hold on;
+
+    % draw circle
+    rectangle('position',[width/2-r,height/2-r,2*r,2*r],'curvature',[1,1],'EdgeColor','r');
+    \end{lstlisting}
+    
+    \item[绘制黑白格]
+    \par 在本例中，我们需要计算出每个像素点所在的区间。如果区间序号模2得到的结果不同，则将其涂黑。
+    \begin{lstlisting}[language=matlab, caption=绘制棋盘]
+    block_width = 8;
+    height_blocks = height/block_width;
+    width_blocks = width/block_width;
+    for i = 1:height
+        for j = 1:width
+            if (xor(mod(floor(i/block_width), 2), mod(floor(j/block_width),2) == 1))
+            for k = 1:3
+                hall_with_chessboard(i,j,k) = 0;
+                end
+            end
+        end
+    end
+    \end{lstlisting}
+\end{description}
+
+\par 最终结果如下：
+\begin{figure}[ht]
+     \centering
+     \includegraphics[width=.8\textwidth]{result1.jpg}
+     \caption{result 1}
+    \label{fig:result 1}
+\end{figure}
+
+\subsection{图像压缩编码}
+
+\subsubsection{图像的预处理}
+\par 图像的预处理是将每个像素的灰度值减去128。这一变换可以在变换域中进行，理由如下：
+\par 考虑二维DCT的矩阵形式：
+\begin{equation}
+    \mathbf{C} = \mathbf{D}\mathbf{P}\mathbf{D^T}
+\end{equation}
+\par 显然我们有：
+\begin{equation}
+    \mathbf{D}(\mathbf{P_1}+\mathbf{P_2})\mathbf{D^T} = \mathbf{D}\mathbf{P_1}\mathbf{D^T} + \mathbf{D}\mathbf{P_2}\mathbf{D^T}
+\end{equation}
+\par 即二维DCT是一个线性变换。我们不妨设$\mathbf{P_2} = 128\mathbf{J}$，其中$\mathbf{J}$为全1矩阵，大小为$N \times N$，则$\mathbf{J} = \overrightarrow{l}\overrightarrow{l}^T$，其中$ \overrightarrow{l}$为长度为1的全1向量。
+\par 由DCT的定义可知：
+\begin{equation}
+    \mathbf{D} = \sqrt{\frac{2}{N}}\begin{pmatrix}
+    \sqrt{\frac{1}{2}} & \cdots & \sqrt{\frac{1}{2}} \\
+    \vdots & \ddots & \vdots \\
+    \cos\frac{(N-1)\pi}{2N} & \cdots & \cos\frac{(N-1)(2N-1)\pi}{2N}
+    \end{pmatrix}
+\end{equation}
+\par 考虑到$\Sigma_{i=0}^{N}\cos \frac{k(2i-1)}{2N} = 0$，显然$\mathbf{D}\overrightarrow{l} = [\sqrt{N}, 0, \cdots, 0]^T$，则我们可以得出：
+\begin{equation}
+    \mathbf{D}\mathbf{P_2}\mathbf{D^T} = \\
+    128\mathbf{D}\overrightarrow{l}\overrightarrow{l}^T\mathbf{D^T} = \\
+    128N\begin{pmatrix}
+    1 & \cdots & 0 \\
+    \vdots & \ddots & \vdots \\
+    0 & \cdots & 0
+    \end{pmatrix}
+\end{equation}
+\par 即$\mathbf{P_2}$的DCT如上式所示，记为$\mathbf{K}$。
+\par 根据题意，我们只需要先将图像进行DCT变换，再将左上角位置的元素减去$128N$即可。为验证这一结论，我们从测试图片中截取8x8的一块进行计算，其中用到了MATLAB中内置的dct2函数：
+\begin{lstlisting}[language=matlab, caption=两种DCT变换形式比较]
+load('data/hall.mat')
+test_img = double(hall_gray(1:8,1:8));
+
+result_1 = dct2(test_img - 128);
+result_2 = dct2(test_img);
+result_2(1,1) = result_2(1,1) - 128*8;
+
+disp(sum(sum(abs(result_1 - result_2))));
+\end{lstlisting}
+\par 可以得到两者差的绝对值之和为$9.0705\times10^{-13}$，这说明在误差范围之内，两种计算方法是等效的。
+
+\subsubsection{编程实现二维DCT}
+\par 二维DCT的代码见\lstinline{my_dct.m}。我们将DCT变换扩充到了非方阵情形：
+\begin{lstlisting}[language=matlab, caption=自定义DCT]
+function [C] = my_dct(P)
+    [h, w] = size(P);
+    D_1 = zeros(h,h);
+    D_1(1,:) = 0.5^0.5;
+    disp(h);
+    for i = 2:h
+        D_1(i,:) = cos(pi*(i-1)*(1:2:(2*h-1))/(2*h));
+    end
+    D_1 = D_1 * (2/h) ^ 0.5;
+    
+    D_2 = zeros(w,w);
+    D_2(1,:) = 0.5^0.5;
+    for i = 2:w
+        D_2(i,:) = cos(pi*(i-1)*(1:2:(2*w-1))/(2*w));
+    end
+    D_2 = D_2 * (2/w) ^ 0.5;
+    
+    C = D_1 * double(P) * D_2';
+end
+\end{lstlisting}
+\par 测试如下：
+\begin{lstlisting}[language=matlab, caption=两种DCT变换形式比较]
+load('data/hall.mat')
+test_img = double(hall_gray(1:7,1:8));
+
+result_1 = dct2(test_img);
+result_2 = my_dct(test_img);
+
+disp(result_1);
+disp(result_2);
+
+disp(sum(sum(abs(result_1 - result_2))));
+\end{lstlisting}
+\par 可以得到两者差的绝对值之和为$4.7719\times10^{-12}$，这说明在误差范围之内，两种计算方法是等效的。
+
+\subsubsection{DCT系数置零}
+\par 为方便起见，我们将生成DCT系数的过程单独抽取为一个函数\lstinline{dct_param.m}。
+\par 在正式进行实验之前，我们需要探讨DCT系数的意义：在DCT系数中，右侧表示高频分量，左侧表示低频分量。更加具体地讲，左上侧系数表示图像的整体亮度，左下侧系数表示纵向变化的纹理的强度，右上侧系数表示横向变化的纹理的强度，右下侧系数表示横竖两个方向均迅速变化的成分。由于常见的图片以缓慢变化为主，所以DCT系数左方取值较大，右方取值较小。我们猜测：去除右侧4列，对图像呈现效果影响不大，但去除左侧4列影响会较大。
+\par 验证代码如下：
+\begin{lstlisting}[language=matlab, caption=DCT置零方式比较]
+load('data/hall.mat')
+P = double(hall_gray);
+subplot(3,1,1);
+imshow(uint8(P));
+title('original');
+
+% DCT with right
+[height, width] = size(P);
+D_1 = get_dct_params(height);
+D_2 = get_dct_params(width);
+
+C = D_1 * P *D_2';
+C(:,end-3:end) = 0;
+
+% IDCT with right
+
+P1 = D_1' * C * D_2;
+subplot(3,1,2);
+imshow(uint8(P1));
+title('right 0');
+
+% DCT with left
+C = D_1 *P *D_2';
+C(:,1:4) = 0;
+
+% IDCT with left
+
+P2 = D_1' * C * D_2;
+subplot(3,1,3);
+imshow(uint8(P2));
+title('left 0');
+\end{lstlisting}
+
+\par 结果如下：
+
+\begin{figure}[ht]
+     \centering
+     \includegraphics[width=.6\textwidth]{result2.jpg}
+     \caption{result 2}
+    \label{fig:result 2}
+\end{figure}
+
+\par 可以看出，与原始图像相比，若将左侧系数置零，则图像受损严重且较暗；而将右侧系数置零，则图像几乎可以完全恢复，与预期结果一致。
+
+\par 为了进一步分析两种变换对图像的影响，我们截取一部分进行分析：
+
+\begin{figure}[ht]
+     \centering
+     \includegraphics[width=.6\textwidth]{result3.jpg}
+     \caption{result 3}
+    \label{fig:result 3}
+\end{figure}
+
+\par 可以得出以下结论：
+\begin{enumerate}
+    \item 若删除左侧系数，我们只能看到纵向的高频分量，而低频分量接近0。
+    \item 若删除右侧系数，则纵向的高频分量被清除，纵向颜色变化较为平缓，但亮度几乎不变。
+\end{enumerate}
+
+\subsubsection{DCT系数的转置和旋转}
+\par 代码如下：
+\begin{lstlisting}[language=matlab, caption=DCT系数的转置和旋转]
+load('data/hall.mat')
+P = double(hall_gray(1:120,1:120));
+subplot(1,4,1);
+imshow(uint8(P));
+title('original');
+
+[height, width] = size(P);
+D_1 = get_dct_params(height);
+D_2 = get_dct_params(width);
+
+% DCT with transpose
+C = D_1 * P *D_2';
+
+% IDCT with transpose
+P1 = D_1' * C' * D_2;
+subplot(1,4,2);
+imshow(uint8(P1));
+title('transpose');
+
+% IDCT with rot 90
+P2 = D_1' * rot90(C) * D_2;
+subplot(1,4,3);
+imshow(uint8(P2));
+title('rot 90');
+
+% IDCT with rot 180
+P2 = D_1' * rot90(C,2) * D_2;
+subplot(1,4,4);
+imshow(uint8(P2));
+title('rot 180');
+
+\end{lstlisting}
+
+\par 结果如下：
+\begin{figure}[ht]
+     \centering
+     \includegraphics[width=.8\textwidth]{result4.jpg}
+     \caption{result 4}
+    \label{fig:result 4}
+\end{figure}
+
+\par 据此，我们可以得出以下结论：
+\begin{enumerate}
+    \item DCT系数转置后的逆变换即为转置后的图像，证明如下：
+    \begin{equation}
+        \mathbf{D}^T\mathbf{C}^T\mathbf{D} = (\mathbf{D}^T\mathbf{C}\mathbf{D})^T = \mathbf{P}^T
+    \end{equation}
+    \item DCT系数旋转90度后，原先右上角的系数将会移动到左上角，而原先左下角的系数将会移到右下角。这意味着，图片的横向纹理较强。
+    \item DCT系数旋转180度后，原先右下角的系数将会移动到左上角。这意味着，图片的纹理会呈现出斜向变化。
+\end{enumerate}
+
+\subsubsection{差分编码的频率响应}
+\par 由于差分编码的表达式可以写作：
+\begin{equation}
+    y(n) = x(n-1) - x(n)
+\end{equation}
+\par 可以用以下代码绘制其频率响应：
+
+\begin{lstlisting}[language=matlab, caption=差分编码频响]
+b = [-1 1];
+a = 1;
+freqz(b,a);
+\end{lstlisting}
+
+\begin{figure}[ht]
+     \centering
+     \includegraphics[width=.8\textwidth]{result5.jpg}
+     \caption{频率响应}
+    \label{fig:result 5}
+\end{figure}
+
+\par 由图可知，这是一个高通滤波器。DC系数的高频分量更多。
+
+\subsubsection{DC error和category}
+\begin{equation}
+\begin{cases}
+    Category = \lfloor \log_2( |error| )\rfloor + 1 , (error \neq 0) \\
+    Category = 0 , (error = 0)
+\end{cases}
+\end{equation}
+
+\subsubsection{zigzag算法的实现}
+\par 观察发现zigzag算法的特点：
+\begin{enumerate}
+    \item 横纵坐标之和单调递增
+    \item 扫描方向与横纵坐标的奇偶性有关
+\end{enumerate}
+\par 据此可以设计zigzag算法。zigzag算法见\lstinline{zig_zag.m}：
+\begin{lstlisting}[language=matlab, caption=zigzag算法]
+function [idx] = zig_zag(mat_size)
+    idx = [];
+    y = reshape(1:mat_size*mat_size, mat_size, mat_size);
+    
+    for i = 2:2*mat_size
+        for j = max(i - mat_size, 1):min(mat_size, i-1)
+            if mod(i, 2) == 0
+               idx = [idx, y(i-j, j)];
+            else
+               idx = [idx, y(j, i-j)];
+            end
+        end
+    end
+end
+\end{lstlisting}
+
+\par 测试结果如下，可见算法正确：
+\begin{figure}[ht]
+     \centering
+     \includegraphics[width=.8\textwidth]{result6.jpg}
+     \caption{zigzag测试结果}
+    \label{fig:result 6}
+\end{figure}
+
+\subsubsection{测试图像DCT、分块和量化}
+\par DCT、分块和量化的步骤如下：
+\begin{enumerate}
+    \item 将图片分为8x8的若干小块。若图片的长和宽不能被8整除，则将其补全。
+    \item 将每个小块预处理（-128）之后进行DCT变换。
+    \item 将DCT变换后的矩阵进行zigzag扫描，并进行拼接。
+\end{enumerate}
+\begin{lstlisting}[language=matlab, caption=DCT、分块和量化]
+load('data/hall.mat');
+load('data/JpegCoeff');
+P = double(hall_gray);
+
+% fill the picture to block it
+[h, w] = size(P);
+if(mod(h, 8) ~=0)
+    P(h+1:(floor(h/8)+1)*8,:) = 0;
+end
+if(mod(w, 8) ~=0)
+    P(:,w+1:(floor(w/8)+1)*8) = 0;
+end
+
+% block
+[h, w] = size(P);
+block_h = h/8;
+block_w = w/8;
+k = 1;
+result = [];
+for i = 0:block_h-1
+    for j = 0:block_w-1
+        block = P(8*i + 1: 8*(i+1),8*j+1:8*(j+1)) - 128; % get the block
+        D_block = dct2(block);
+        D_block = round(D_block./QTAB); % quantation
+        zigzag_D_idx = zig_zag(8);
+        result(:,k) = D_block(zigzag_D_idx); % zigzag
+        k = k + 1;
+    end
+end
+\end{lstlisting}
+
+
+\subsubsection{JPEG编码}
+\par 上一步计算中得到了图像的DC系数和AC系数。定义函数\lstinline{dc_params.m}和\lstinline{ac_params.m}分别计算DC编码和AC编码。
+\par DC编码可以分为两部分：huffman encode和binary encode。
+\par DC编码的流程如下：
+\begin{enumerate}
+    \item 对DC系数进行差分。
+    \item 对差分后的系数进行huffman encode和binary encode。
+\end{enumerate}
+\par 此处需要特别指出的是，0的binary encode不是'0'，而是''。
+\begin{lstlisting}[language=matlab, caption=DC code]
+function [dc_code] = dc_encode(params)
+    dc_params = params(1, :)';
+    dc_params_diff = [];
+    dc_params_diff(1) = dc_params(1);
+    dc_len = length(dc_params);
+    
+    % diff, and code
+    dc_code = strcat(huffman_encode(dc_params_diff(1)), category_encode(dc_params_diff(1)));
+    for i = 2:dc_len
+        dc_params_diff(i) = dc_params(i-1) - dc_params(i);
+        huffman_code = huffman_encode(dc_params_diff(i));
+        binary_code = binary_encode(dc_params_diff(i));
+        dc_code = strcat(dc_code, huffman_code, binary_code);
+    end
+end
+\end{lstlisting}
+
+\par AC编码可以分为两部分：run/size encode和binary encode。
+\par AC编码的流程较为复杂：
+\begin{enumerate}
+    \item 对系数进行zigzag扫描。
+    \item 我们需要得出每一个非零系数的Size和Run，查表得到Huffman编码，再与Amptitude拼接。
+    \item 如果遇到16个连零，我们需要将其编码为11111111001（ZRL）；如果遇到结束，我们需要编码1010（EOB）。
+\end{enumerate}
+
+\begin{lstlisting}[language=matlab, caption=AC code]
+function [ac_code] = ac_encode(params)
+    ZRL = '11111111001';
+    EOB = '1010';
+    ac_code  = '';
+    ac_params = params(2:end, :);
+    for i = 1:size(ac_params, 2)
+        vec = ac_params(:,i); % params after zigzag
+        zero_num = 0;
+        for j = 1:length(vec)
+            if vec(j) ~= 0
+                while zero_num >= 16
+                    ac_code = strcat(ac_code, ZRL);
+                    zero_num = zero_num - 16;
+                end
+                ac_code = strcat(ac_code, run_size_encode(zero_num, vec(j)));
+                ac_code = strcat(ac_code, binary_encode(vec(j)));
+                zero_num = 0;
+            else
+                zero_num = zero_num + 1;
+            end
+        end
+        ac_code = strcat(ac_code, EOB); 
+    end
+end
+\end{lstlisting}
+
+\par 其中辅助函数如下：
+\begin{lstlisting}[language=matlab, caption=huffman encode]
+function [huffman_code] = huffman_encode(num)
+    load('data/JpegCoeff.mat');
+    if(num == 0)
+        category = 0;
+    else
+        category = floor(log2(abs(num))) + 1;
+    end
+    
+    huffman_code_length = DCTAB(category+1,1);
+    huffman_code = DCTAB(category+1, 2:1 + huffman_code_length);
+    huffman_code = num2str(huffman_code);
+    huffman_code = strrep(huffman_code, ' ', '');
+    
+end
+\end{lstlisting}
+
+\begin{lstlisting}[language=matlab, caption=binary encode]
+function [category_code] = binary_encode(num)
+    load('data/JpegCoeff.mat');
+    if(num == 0)
+        category_code = '';
+    else
+        category_code = dec2bin(abs(num));
+    end
+    if(num < 0)
+        for i = 1:length(category_code)
+            category_code(i) = num2str(~str2num(category_code(i)));
+        end
+    end
+end
+\end{lstlisting}
+
+\begin{lstlisting}[language=matlab, caption=run/size encode]
+function [run_size_code] = run_size_encode(run, size)
+    load('data/JpegCoeff.mat');
+    if(size == 0)
+        category = 0;
+    else
+        category = floor(log2(abs(size))) + 1;
+    end
+    idx = run*10 + category;
+    code_length = ACTAB(idx,3);
+    run_size_code = ACTAB(idx,4:4+code_length-1);
+    run_size_code = num2str(run_size_code);
+    run_size_code = strrep(run_size_code, ' ', '');
+end
+\end{lstlisting}
+
+\par DC编码测例如下，与说明文档中相一致，可见结果正确：
+\begin{figure}[ht]
+     \centering
+     \includegraphics[width=.4\textwidth]{result7.jpg}
+     \caption{DC编码测试结果}
+    \label{fig:result 7}
+\end{figure}
+
+\par AC编码测例如下，与说明文档中相一致，可见结果正确：
+\begin{figure}[ht]
+     \centering
+     \includegraphics[width=.4\textwidth]{result8.jpg}
+     \caption{AC编码测试结果}
+    \label{fig:result 8}
+\end{figure}
+
+\par 为了方便起见，我们将分块、DCT、量化的算法封装为一个函数：
+\begin{lstlisting}[language=matlab, caption=分块、DCT、量化]
+function [result] = get_dct_matrix(P)
+% fill the picture to block it
+[h, w] = size(P);
+if(mod(h, 8) ~=0)
+    P(h+1:(floor(h/8)+1)*8,:) = 0;
+end
+if(mod(w, 8) ~=0)
+    P(:,w+1:(floor(w/8)+1)*8) = 0;
+end
+
+% block
+[h, w] = size(P);
+block_h = h/8;
+block_w = w/8;
+k = 1;
+result = [];
+for i = 0:block_h-1
+    for j = 0:block_w-1
+        block = P(8*i + 1: 8*(i+1),8*j+1:8*(j+1)) - 128; % get the block
+        D_block = dct2(block);
+        D_block = round(D_block./QTAB); % quantation
+        zigzag_D_idx = zig_zag(8);
+        result(:,k) = D_block(zigzag_D_idx); % zigzag
+        k = k + 1;
+    end
+end
+end
+\end{lstlisting}
+
+\par 最后，我们将图片的DC码流、AC码流、长度、宽度写入文件：
+\begin{lstlisting}[language=matlab, caption=写入文件]
+load('data/hall.mat');
+load('data/JpegCoeff');
+P = double(hall_gray);
+
+dct_matrix = get_dct_matrix(P);
+dc_code = dc_encode(dct_matrix);
+disp(length(dc_code));
+ac_code = ac_encode(dct_matrix);
+disp(length(ac_code));
+[h, w] = size(P);
+save('jpegcodes.mat', 'dc_code', 'ac_code', 'h', 'w');
+\end{lstlisting}
+
+\par 方便起见，我们定义函数实现jpeg编码，输入为图像数据和码流文件名称：
+\begin{lstlisting}[language=matlab, caption=jpeg-encode.m]
+function [] = jpeg_encode(original_picture, stream_name)
+    load('data/JpegCoeff');
+    dct_matrix = get_dct_matrix(original_picture);
+    dc_code = dc_encode(dct_matrix);
+    ac_code = ac_encode(dct_matrix);
+    [h, w] = size(original_picture);
+    save(stream_name, 'dc_code', 'ac_code', 'h', 'w');
+end
+\end{lstlisting}
+
+
+\subsubsection{计算压缩比}
+\par 由于原图的尺寸为20160 bytes，变换后DC码流长为2031，AC码流长为23072，总长度为25103 bits（3137 bytes），计算得出压缩比为6.4265。
+
+\subsubsection{JPEG解码}
+
+\par JPEG解码的基本步骤如下：
+\begin{enumerate}
+    \item DC解码和AC解码
+    \par 考虑到DC码和AC码中的huffman code和run/size code均为huffman编码，我们可以构造huffman树。由于huffman编码较小，所以我们也可以考虑直接构造哈希表，在解码时直接检索即可：
+    \begin{lstlisting}[language=matlab, caption=dc huffman tree]
+function [huffman_tree_dict] = dc_huffman_tree_dict()
+    load('data/JpegCoeff.mat');
+    [code_num, len] = size(DCTAB);
+    huffman_tree_dict = containers.Map();
+    
+    for i = 1:code_num
+        % get huffman code
+        huffman_code_length = DCTAB(i,1);
+        huffman_code = DCTAB(i, 2:1 + huffman_code_length);
+        huffman_code = num2str(huffman_code);
+        huffman_code = strrep(huffman_code, ' ', '');
+        disp([num2str(i-1), '->', huffman_code]);
+        huffman_tree_dict(huffman_code) = i - 1;
+    end
+end
+    \end{lstlisting}
+    
+    \begin{lstlisting}[language=matlab, caption=ac huffman tree]
+function [huffman_tree_dict] = ac_huffman_tree_dict()
+    load('data/JpegCoeff.mat');
+    [code_num, len] = size(ACTAB);
+    huffman_tree_dict = containers.Map();
+    
+    for i = 1:code_num
+        % get huffman code
+        huffman_code_length = ACTAB(i,3);
+        huffman_code = ACTAB(i, 4:3 + huffman_code_length);
+        huffman_code = num2str(huffman_code);
+        huffman_code = strrep(huffman_code, ' ', '');
+        disp([num2str(i-1), '->', huffman_code]);
+        huffman_code = strcat('x', huffman_code);
+        huffman_tree_dict(huffman_code) = i;
+    end
+end
+    \end{lstlisting}
+    
+    \par 对于DC码流解码，哈希表构造完毕之后，我们首先将码流一一与哈希表对比，huffman code解码成功后即可得到binary code的长度，再对binary code进行解码即可得到原来的数值，完毕之后跳过binary code，进行解码下一个huffman code，直到码流的末尾。最后进行反差分即可。代码如下：
+    \begin{lstlisting}[language=matlab, caption=dc decode]
+function [dc_decode_data] = dc_decode(dc_stream)
+    len = length(dc_stream);
+    huffman_code_temp = '';
+    huffman_code_dict = dc_huffman_tree_dict();
+    dc_decode_data = [];
+    i = 1;
+    
+    % diff decode
+    while i <= len
+        huffman_code_temp = strcat(huffman_code_temp, dc_stream(i));
+        if(isKey(huffman_code_dict, huffman_code_temp))
+            % get the decode data's length
+            dc_decode_data_length = huffman_code_dict(huffman_code_temp);
+            % get the binary code
+            i = i + 1;
+            if(dc_decode_data_length)
+                binary_code = dc_stream(i:i + dc_decode_data_length - 1);
+            else
+                binary_code = '';
+            end
+            % decode data
+            dc_decode_data = [dc_decode_data, binary_decode(binary_code)];
+            % reset the huffman code
+            huffman_code_temp = ''; 
+            % jump
+            i = i + dc_decode_data_length;
+        else
+            i = i + 1;
+        end
+    end
+    
+    % sum
+    for i = 1:length(dc_decode_data) - 1
+        dc_decode_data(i+1) = dc_decode_data(i) - dc_decode_data(i+1);
+    end
+end
+    \end{lstlisting}
+    
+    \par 我们可以将编码之前的原始数据和解码之后的数据进行比较，发现我们可以完全复原其信息：
+    \begin{figure}[ht]
+        \centering
+        \includegraphics[width=.4\textwidth]{result9.jpg}
+        \caption{DC解码测试结果}
+        \label{fig:result 9}
+    \end{figure}
+    
+    \par 对于AC解码，我们首先针对每一个小块构建一个长为63的向量（注意除去了DC系数），将码流一一与哈希表对比，huffman code解码成功后即可得到run和size，再分别进行解码得到之前0的数目和数值，完毕之后跳过binary code，进行解码下一个huffman code，直到码流的末尾。同时要特别注意遇到EOB和ZRL的情况。
+    
+    \begin{lstlisting}[language=matlab, caption=ac decode]
+function [ac_decode_data] = ac_decode(ac_stream)
+    len = length(ac_stream);
+    huffman_code_temp = '';
+    huffman_code_dict = ac_huffman_tree_dict();
+    ac_decode_data_vec = zeros(1,63);
+    ac_decode_data = [];
+    i = 1;
+    idx = 1;
+    
+    ZRL = '11111111001';
+    EOB = '1010';
+    
+    % diff decode
+    while i <= len
+        huffman_code_temp = strcat(huffman_code_temp, ac_stream(i));
+        if(isKey(huffman_code_dict, huffman_code_temp))
+            % get the decode data's length
+            raw_data = huffman_code_dict(huffman_code_temp);
+            binary_data_run = floor(raw_data / 10);
+            binary_data_size = mod(raw_data, 10);
+            while(binary_data_run > 0)
+                idx = idx + 1;
+                binary_data_run = binary_data_run - 1;
+            end
+            % get the binary code
+            i = i + 1;
+            if(binary_data_size)
+                binary_code = ac_stream(i:i + binary_data_size - 1);
+            else
+                binary_code = '';
+            end
+            % decode data
+            ac_decode_data_vec(idx) = binary_decode(binary_code);
+            idx = idx + 1;
+            % reset the huffman code
+            huffman_code_temp = ''; 
+            % jump
+            i = i + binary_data_size;
+        elseif(strcmp(huffman_code_temp, ZRL) == 1)
+            for j = 1:16
+                 idx = idx + 1;
+            end
+            i = i + 1;
+            huffman_code_temp = '';
+        elseif(strcmp(huffman_code_temp, EOB) == 1)
+            ac_decode_data = [ac_decode_data; ac_decode_data_vec];
+            ac_decode_data_vec = zeros(1,63);
+            i = i + 1;
+            idx = 1;
+            huffman_code_temp = '';
+        else
+            i = i + 1;
+        end
+    end
+    ac_decode_data = ac_decode_data';
+end
+    \end{lstlisting}
+    
+    \par 我们可以将编码之前的原始数据和解码之后的数据进行比较，发现我们可以完全复原其信息：
+    \begin{figure}[ht]
+        \centering
+        \includegraphics[width=.4\textwidth]{result10.jpg}
+        \caption{AC解码测试结果}
+        \label{fig:result 10}
+    \end{figure}
+    
+    \item 反zigzag扫描
+    \par 反zigzag扫描的思路和zigzag扫描类似，只不过是将方向反过来：
+    \begin{lstlisting}[language=matlab, caption=inv zig zag]
+    function [y] = inv_zig_zag(vec)
+        mat_size = sqrt(length(vec));
+        zig_zag_idx = zig_zag(mat_size);
+        y = zeros(1, mat_size);
+        for i = 1:mat_size * mat_size
+            y(zig_zag_idx(i)) = zig_zag_idx(i);
+        end
+        y = reshape(y, mat_size, mat_size);
+        y = y';
+    end
+    \end{lstlisting}
+    
+    \item 反量化、逆DCT变换和图片拼接
+    \begin{lstlisting}[language=matlab, caption=反量化、逆DCT变换和图片拼接]
+        for i = 0:block_h - 1
+        for j = 0:block_w - 1
+            block = full_matrix(:,k);
+            block = inv_zig_zag(block);
+            block = block.*QTAB;
+            block = idct2(block);
+            block = block + 128;
+            picture(8*i + 1: 8*(i+1),8*j + 1:8*(j+1)) = uint8(block);
+            k = k + 1;
+        end
+    end
+    \end{lstlisting}
+    
+\end{enumerate}
+
+\par 方便起见，我们将解码封装为函数：
+\begin{lstlisting}[language=matlab, caption=jpeg-decode]
+function [picture] = jpeg_decode(stream_file)
+    load(stream_file);
+    load('data/JpegCoeff.mat');
+    
+    picture = zeros(h, w);
+    % decode
+    dc_matrix = dc_decode(dc_code);
+    ac_matrix = ac_decode(ac_code);
+    full_matrix = [dc_matrix; ac_matrix];
+    disp(full_matrix);
+
+    % inv zig zag & inv quat
+    block_h = h/8;
+    block_w = w/8;
+    k = 1;
+
+    for i = 0:block_h - 1
+        for j = 0:block_w - 1
+            block = full_matrix(:,k);
+            block = inv_zig_zag(block);
+            block = block.*QTAB;
+            block = idct2(block);
+            block = block + 128;
+            picture(8*i + 1: 8*(i+1),8*j + 1:8*(j+1)) = uint8(block);
+            k = k + 1;
+        end
+    end
+end
+\end{lstlisting}
+
+\par 测试代码如下：
+\begin{lstlisting}[language=matlab, caption=jpeg测试]
+load('data/hall.mat')
+subplot(1,2,1);
+imshow(uint8(hall_gray));
+title("original");
+
+jpeg = jpeg_decode('jpegcodes.mat');
+subplot(1,2,2);
+imshow(uint8(jpeg));
+title("jpeg");
+
+mse = sum((double(jpeg) - double(hall_gray)).^2, 'all')/(h*w);
+psnr = 10*log10(255*255/mse);
+disp(psnr);
+\end{lstlisting}
+
+\par jpeg解码结果如下：
+    \begin{figure}[ht]
+        \centering
+        \includegraphics[width=.8\textwidth]{result11.jpg}
+        \caption{jpeg解码测试结果}
+        \label{fig:result 11}
+    \end{figure}
+
+\par 可以看出，jpeg的恢复效果很好。计算得到图像的PSNR值为31.1874dB。
+
+\subsubsection{将量化步长减小为原来的一半之后重新编解码}
+\par 减小之后，PSNR值变为34.2067dB。DC码流长为2410，AC码流长为34164，总长度为36574 bits（4571 bytes）由于原图尺寸为20160 bytes，压缩比为4.4104。
+
+\par 由此可见，图像PSNR值升高，压缩比降低，但仍然没有出现较大失真。
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=.8\textwidth]{result12.jpg}
+    \caption{量化步长减小后的jpeg解码测试结果}
+    \label{fig:result 12}
+\end{figure}
+
+\subsubsection{雪花图像的编解码}
+
+\par PSNR值为22.9244 dB。DC码流长为1403，AC码流长为43546，总长度为44949 bits（5618 bytes）由于原图尺寸为20160 bytes，压缩比为3.5885。图片的失真度较高。
+\par 原因如下：jpeg编码适用于色彩变换较为平缓、高频分量较小的图片，而雪花图片的色彩分布没有规律可言，高频分量较大，因此在压缩之后失真较大。
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=.8\textwidth]{result13.jpg}
+    \caption{雪花图像的编解码}
+    \label{fig:result 13}
+\end{figure}
+
+\subsection{信息隐藏}
+
+\subsubsection{空域隐藏和提取}
+
+\par 为了使得结果具有普适性，我们使用随机信息序列进行隐藏。我们将信息保存为二进制码流，然后储存至每个像素的最后一位。
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=.8\textwidth]{result14.jpg}
+    \caption{空域隐藏和提取}
+    \label{fig:result 14}
+\end{figure}
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=.4\textwidth]{result15.jpg}
+    \caption{空域隐藏和提取正确率}
+    \label{fig:result 15}
+\end{figure}
+
+\par 可以看出，图片几乎无失真，但提取信息的正确率在50\%左右，这意味着其抗jpeg编码能力很差。
+
+\subsubsection{变换域隐藏和提取}
+
+\par 公平起见，我们仍然使用随机0/1序列进行测试。很显然可以猜测得到，方法2和3相比于方法1储存的信息少、图片失真率小。为了让方法2和方法3具有可比性，在方法2中我们在每一个块中只选取一个位进行储存信息，这样与方法3存储信息的密度相同。在方法2中为了比较不同替换策略的影响，此处我设置了三种替换策略：选取最大的量化值（2-1）、随机选取（2-2）、选取最小的量化值（2-3）。
+
+\begin{description}
+    \item[方法1：用信息位逐一替换掉每一个量化之后的DCT系数的最低位，再进行熵编码]
+    
+    \item[方法2：用信息位逐一替换掉若干量化之后的DCT系数的最低位，再进行熵编码]
+
+    \item[方法3：将信息位追加在每一个块zig-zag顺序的最后一个非零DCT系数之后] 
+    
+\end{description}
+
+\par 编码、解码的代码如下所示：
+
+\begin{lstlisting}[language=matlab, caption=信息编码]
+function [dc_code, ac_code, h, w, hidden_info] = jpeg_encode_with_info(original_picture, stream_name, QTAB, DCTAB, ACTAB, method)
+    dct_matrix = get_dct_matrix_with_params(original_picture, QTAB);
+    [dct_h, dct_w] = size(dct_matrix);
+    hidden_info = uint8(randi([0 1], dct_h * dct_w ,1));
+    hidden_info = reshape(hidden_info, dct_h, dct_w);
+    [h, w] = size(original_picture);
+    zig_zag_idx = zig_zag(8);
+    m = median(QTAB, 'all');
+    switch (method)
+        case('method_1')
+            dct_with_info = double(bitset(int64(dct_matrix), 1, hidden_info));
+        case('method_2_1')
+            [~, max_idx] = max(QTAB(zig_zag_idx));
+            dct_with_info = dct_matrix;
+            dct_with_info(max_idx,:) = double(bitset(int64(hidden_info(max_idx,:)), 1, hidden_info(max_idx,:)));
+            hidden_info = hidden_info(max_idx,:);
+        case('method_2_2')
+            random_idx = 32;
+            dct_with_info = dct_matrix;
+            dct_with_info(random_idx,:) = double(bitset(int64(hidden_info(random_idx,:)), 1, hidden_info(random_idx,:)));
+            hidden_info = hidden_info(random_idx,:);
+        case('method_2_3')
+            [~, min_idx] = min(QTAB(zig_zag_idx));
+            dct_with_info = dct_matrix;
+            dct_with_info(min_idx,:) = double(bitset(int64(hidden_info(min_idx,:)), 1, hidden_info(min_idx,:)));
+            hidden_info = hidden_info(min_idx,:);
+        case('method_3')
+            dct_with_info = dct_matrix;
+            hidden_info = int8(hidden_info(1:dct_w));
+            hidden_info_tmp = hidden_info;
+            for i = 1:length(hidden_info)
+                if hidden_info_tmp(i) == 0  
+                    hidden_info_tmp(i) = -1;
+                end
+            end
+            idx = 1;
+            for i = 1:dct_w
+                for j = dct_h:-1:1
+                    if(dct_with_info(j, i) ~= 0)
+                        if (j ~= dct_h)
+                            dct_with_info(j + 1, i) = hidden_info_tmp(idx);
+                        else
+                            dct_with_info(j, i) = hidden_info_tmp(idx);
+                        end
+                        break
+                    end
+                end
+                idx = idx + 1;
+            end
+        otherwise
+            ME = MException('available options: method_1/method_2_1/method_2_2/method_2_3/method_3');
+            throw(ME);
+    end
+    dc_code = dc_encode(dct_with_info, DCTAB);
+    ac_code = ac_encode(dct_with_info, ACTAB);
+    save(stream_name, 'dc_code', 'ac_code', 'h', 'w');
+end
+\end{lstlisting}
+
+\begin{lstlisting}[language=matlab, caption=信息解码]
+function [picture, decode_info] = jpeg_decode_with_info(stream_file, QTAB, DCTAB, ACTAB, method)
+    load(stream_file);
+    
+    picture = zeros(h, w);
+    % decode
+    dc_matrix = dc_decode(dc_code, DCTAB);
+    ac_matrix = ac_decode(ac_code, ACTAB);
+    full_matrix = [dc_matrix; ac_matrix];
+    [dct_h, dct_w] = size(full_matrix);
+    m = median(QTAB, 'all');
+    zig_zag_idx = zig_zag(8);
+    
+    switch (method)
+        case('method_1')
+            decode_info = bitget(int64(full_matrix), 1);
+        case('method_2_1')
+            [~, max_idx] = max(QTAB(zig_zag_idx));
+            decode_info = bitget(int64(full_matrix(max_idx,:)), 1);
+        case('method_2_2')
+            random_idx = 32;
+            decode_info = bitget(int64(full_matrix(random_idx,:)), 1);
+        case('method_2_3')
+            [~, min_idx] = min(QTAB(zig_zag_idx));
+            decode_info = bitget(int64(full_matrix(min_idx,:)), 1);
+        case('method_3')
+            decode_info = int8(zeros(dct_w, 1));
+            for i = 1:dct_w
+                for j = dct_h:-1:1
+                    if(full_matrix(j,i) ~= 0)
+                        if(full_matrix(j,i) > 0)
+                            decode_info(i) = 1;
+                        elseif(full_matrix(j,i) < 0)
+                            decode_info(i) = 0;
+                        end
+                        break
+                    end
+                end
+            end
+        otherwise
+            ME = MException('available options: method_1/method_2_1/method_2_2/method_2_3/method_3');
+            throw(ME);
+    end
+
+    % inv zig zag & inv quat
+    block_h = h/8;
+    block_w = w/8;
+    k = 1;
+
+    for i = 0:block_h - 1
+        for j = 0:block_w - 1
+            block = full_matrix(:,k);
+            block = inv_zig_zag(block);
+            block = block.*QTAB;
+            block = idct2(block);
+            block = block + 128;
+            picture(8*i + 1: 8*(i+1),8*j + 1:8*(j+1)) = uint8(block);
+            k = k + 1;
+        end
+    end
+end
+\end{lstlisting}
+
+\par 三种方法的压缩比、PSNR、准确率、主观评判质量如下表所示：
+
+\begin{table}[htbp]
+  \centering
+  \caption{变换域隐藏结果}
+    \begin{tabular}{cccccc}
+          & 方法1   & 方法2-1 & 方法2-2 & 方法2-3 & 方法3 \\
+    PSNR/dB & 15.5001 & 26.0098 & 29.5916 & 26.0061 & 28.9016 \\
+    压缩比   & 2.8784 & 5.4431 & 6.0461 & 6.5612 & 6.1916 \\
+    正确率   & 1     & 1     & 1     & 1     & 1 \\
+    主观评判质量 & 差     & 中     & 中     & 好     & 好 \\
+    \end{tabular}%
+  \label{tab:addlabel}%
+\end{table}%
+
+\par 生成的图像如下所示：
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=.9\textwidth]{result16.jpg}
+    \caption{变换域隐藏图像}
+    \label{fig:result 16}
+\end{figure}
+
+\par 由此可以得出，三种方法都能够正确解码隐藏信息。其中，方法2-3和方法3具有较好的效果：图像的PSNR值和压缩比均较高。
+
+\subsection{人脸检测}
+
+\subsubsection{人脸识别模型的训练}
+\begin{description}
+    \item [是否需要调整图片的大小]
+    \par 不需要，因为我们只关注人脸的颜色。
+    \item [L=3、4、5时，所得人脸特征v之间的关系]
+    由于RGB值是一个uint8数值，所以L的值意味着提取RGB之中的前L位。L越大，标号相同的颜色就越少、所能表示的颜色就越精确、但数据量也越大。
+    
+\end{description}
+
+\subsubsection{人脸检测算法}
+\par 首先，我们需要将所有的R、G、B值拼接为一个值。同时为了权衡L的大小对识别的影响，我们也将提取位数L设置为参数：
+\begin{lstlisting}[language=matlab, caption=RGB值的拼接]
+function [val] = concact_rgb(r, g, b, l)    
+    ignore_bits = 8 - l;
+    r = bitshift(r, -ignore_bits, 'uint8');
+    g = bitshift(g, -ignore_bits, 'uint8');
+    b = bitshift(b, -ignore_bits, 'uint8');
+    val = bitshift(r, l*2, 'uint32') + bitshift(g, l, 'uint32') + b;
+end
+\end{lstlisting}
+
+\par 之后，我们使用拼接好的值计算概率密度：
+\begin{lstlisting}[language=matlab, caption=概率密度计算]
+function [destiny_list] = get_probability_density(img, l)
+    [h, w, c] = size(img);
+    img = reshape(img, h*w, c);
+    destiny_list = zeros(1, 2^(3 * l));
+    for i = 1:h * w
+        feature = concact_rgb(img(i, 1), img(i, 2), img(i, 3), l); 
+        destiny_list(feature + 1) = destiny_list(feature + 1) + 1;
+    end
+    destiny_list = destiny_list/(h*w);
+end 
+\end{lstlisting}
+
+\par 一个概率密度提取示例如下，从上到下分别为l = 3、4、5的情形：
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=.9\textwidth]{result17.jpg}
+    \caption{概率密度提取示例}
+    \label{fig:result 17}
+\end{figure}
+
+\par 可以较为容易地看出，l越大，数据量越大，但对于颜色的分辨能力就越精确。
+
+\par 接下来就可以准备训练特征了。
+\begin{description}
+    \item [训练标准特征] 
+    计算训练集中人脸特征的平均值。由于训练集中的图片几乎全部区域均为人脸，所以我们无需手动定位。计算公式如下：
+    \begin{equation}
+        \mathbf{v} = \frac{1}{I}\Sigma_i\mathbf{u}(R_i)
+    \end{equation}
+    \item [分块]
+    将图像划分为小块分别与标准特征比较。
+    \item [计算与人脸标准的距离]
+    定义待定特征和人脸标准的距离如下：
+    \begin{equation}
+        d(\mathbf{u}(R),\mathbf{v}) = 1 - \rho(\mathbf{u}(R),\mathbf{v}) = 1 - \Sigma_n\sqrt{u_n v_n}
+    \end{equation}
+    \item [比较]
+    判断待定特征和人脸标准的相似程度，如果相似，则使用锚定框标记：
+    \begin{equation}
+        R\in Face \quad \quad if \quad d(\mathbf{u}(R),\mathbf{v}) < \epsilon
+    \end{equation}
+\end{description}
+
+\par 训练代码如下：
+\begin{lstlisting}[language=matlab, caption=特征提取]
+function [destiny_list] = extract_face_feature(l)
+    destiny_list = zeros(1, 2^(3 * l));
+    for i = 1:33
+        picture = imread(strcat('data/Faces/', num2str(i), '.bmp'));
+        destiny_list_single = get_probability_density(picture, l);
+        destiny_list = destiny_list + destiny_list_single;
+    end
+    destiny_list = destiny_list/33;
+end
+\end{lstlisting}
+
+\par 检测代码如下：
+\begin{lstlisting}[language=matlab, caption=人脸检测]
+function [] = get_face_area(file_name, ref_destiny, l, threshold, block_size)
+    % get the feature
+    subplot(2,1,1);
+    idx = 1:length(ref_destiny);
+    plot(idx, ref_destiny);
+
+    % split the picture
+    P = imread(file_name);
+
+    subplot(2,1,2);
+    imshow(P);
+
+    % block
+    [h, w, c] = size(P);
+    block_h = floor(h/block_size);
+    block_w = floor(w/block_size);
+    title(strcat('threshold=',num2str(threshold), ' l=', num2str(l), ' block-size=', num2str(block_size)));
+
+    for i = 0:block_h-1
+        for j = 0:block_w-1
+            block = P(block_size * i + 1: block_size * (i + 1),block_size * j + 1:block_size * (j + 1),:); % get the block
+            hypo_destiny = get_probability_density(block, l);
+            if(1 - sum(sqrt(hypo_destiny).*sqrt(ref_destiny)) < threshold)
+                rectangle('position',[block_size*j + 1,block_size*i + 1,block_size,block_size],'EdgeColor','r');
+            end
+        end
+    end
+end
+\end{lstlisting}
+
+\par 选取若干测试图片（\ref{fig:result 18}、\ref{fig:result 19}、\ref{fig:result 20}），可以发现该检测方法的一些问题：
+\begin{enumerate}
+    \item 基本可以识别出人脸特征。
+    \item 容易将手或与皮肤颜色相近的背景识别为人脸。
+    \item 对于黑色人种的识别效果较差。
+\end{enumerate}
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=.7\textwidth]{result18.jpg}
+    \caption{识别样例1}
+    \label{fig:result 18}
+\end{figure}
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=.7\textwidth]{result19.jpg}
+    \caption{识别样例2}
+    \label{fig:result 19}
+\end{figure}
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=.7\textwidth]{result20.jpg}
+    \caption{识别样例3}
+    \label{fig:result 20}
+\end{figure}
+
+\par 之后我们选取一张合照，并寻找最适合其的超参。对一张合照枚举l（3、4、5）、threshold（0.6、0.7、0.8、0.9）、block size（10、20）三个值，得到的结果如图（\ref{fig:result 21}、\ref{fig:result 22}）：
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=.9\textwidth]{result21.jpg}
+    \caption{合照人脸检测1}
+    \label{fig:result 21}
+\end{figure}
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=.9\textwidth]{result22.jpg}
+    \caption{合照人脸检测2}
+    \label{fig:result 22}
+\end{figure}
+
+\par 可以得出以下结论：
+\begin{enumerate}
+    \item l越大，方块被识别为人脸的概率就越大。
+    \item threshold越大，方块被识别为人脸的概率就越大。
+    \item block size应该与人脸的尺寸相近或略小。
+\end{enumerate}
+
+\par 经过比对，我选出了效果较好的参数组，其中第一组的效果如图\ref{fig:result 23}：
+\begin{enumerate}
+    \item threshold = 0.6, l = 4, block-size = 10
+    \item threshold = 0.7, l = 5, block-size = 20
+    \item threshold = 0.8, l = 5, block-size = 10
+\end{enumerate}
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=.9\textwidth]{result23.jpg}
+    \caption{threshold = 0.6, l = 4, block-size = 10}
+    \label{fig:result 23}
+\end{figure}
+
+\subsubsection{图像变换后的人脸检测}
+\par 此处仍选择之前的最佳超参：threshold = 0.6, l = 4, block-size = 10。测试代码如下：
+\begin{lstlisting}[language=matlab, caption=图像变换]
+l = 4;
+block_size = 10;
+threshold = 0.6;
+
+P = imread('data/test_3.bmp');
+
+P_2 = rot90(P);
+get_face_area(P_2, ref_destiny, l, threshold, block_size);
+title('rotate 90 degrees');
+
+[h, w, c] = size(P);
+P_3 = imresize(P, [h, w*2],'nearest');
+get_face_area(P_3, ref_destiny, l, threshold, block_size);
+title('enlarge width');
+
+P_4 = imadjust(P,[.2 .3 0; .6 .7 1],[]);
+get_face_area(P_4, ref_destiny, l, threshold, block_size);
+title('adjust the color');
+\end{lstlisting}
+
+\begin{description}
+    \item [图片顺时针旋转90度] 见图\ref{fig:result 24}
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=.9\textwidth]{result24.jpg}
+    \caption{图片顺时针旋转90度}
+    \label{fig:result 24}
+\end{figure}
+    \item [宽度拉伸为之前的2倍] 见图\ref{fig:result 25}
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=.9\textwidth]{result25.jpg}
+    \caption{宽度拉伸为之前的2倍}
+    \label{fig:result 25}
+\end{figure}
+    \item [改变图片颜色] 见图\ref{fig:result 26}
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=.9\textwidth]{result26.jpg}
+    \caption{改变图片颜色}
+    \label{fig:result 26}
+\end{figure}
+\end{description}
+
+\par 可以得出以下结论：旋转和改变尺寸，对识别效果影响不算大，但改变图片颜色对于识别效果影响巨大。这是因为我们的判别准则是基于颜色进行的。
+
+\subsubsection{重新选择人脸样本训练标准}
+
+\par 综合上述实验，我认为更合适的人脸样本训练标准如下：
+\begin{enumerate}
+    \item 样本应该涵盖更多的人种。
+    \item 由于以上识别方法容易把身体的其它部位或背景颜色识别为人脸，我们应该制定一个与轮廓有关的识别算法，使用轮廓和颜色进行综合判断。
+    \item 样本应该涵盖多种光照角度下的情况，使得特征更具有鲁棒性。
+\end{enumerate}
+
+\end{document}
